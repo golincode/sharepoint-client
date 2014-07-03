@@ -825,7 +825,7 @@ class RESTClient
 				'url'     => $json->d->PersonalUrl,
 				'picture' => $json->d->PictureUrl,
 				'title'   => $json->d->Title
-		);
+			);
 
 		} catch(ParseException $e) {
 			throw new SharePointException($e->getMessage());
@@ -852,11 +852,7 @@ class RESTClient
 				throw new SharePointException('The Account is empty/not set');
 			}
 
-			$response = $this->rc->get($this->path.'/_api/SP.UserProfiles.PeopleManager/GetPropertiesFor', array(
-				// /_api/SP.UserProfiles.PeopleManager/GetUserProfilePropertyFor%28accountName=@v,propertyName=%27PictureURL%27%29?@v=%27i:0%23.f|membership|mpomeroy@architect365.onmicrosoft.com%27
-
-//				'/_api/SP.UserProfiles.PeopleManager/GetMyProperties?$select=DisplayName,UserProfileProperties/FirstName,AccountName,Email',
-
+			$response = $this->rc->post($this->path."/_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)", array(
 				'exceptions' => false,
 
 				'headers' => array(
@@ -865,7 +861,7 @@ class RESTClient
 				),
 
 				'query' => array(
-					'accountName' => $account
+					'@v' => "'".$account."'"
 				)
 			));
 
@@ -875,10 +871,14 @@ class RESTClient
 				throw new SharePointException($json->error->message->value);
 			}
 
-			return $json->d;
-
-		} catch(RequestException $e) {
-			throw new SharePointException($e->getMessage());
+			return array(
+				'account' => $json->d->AccountName,
+				'email'   => $json->d->Email,
+				'name'    => $json->d->DisplayName,
+				'url'     => $json->d->PersonalUrl,
+				'picture' => $json->d->PictureUrl,
+				'title'   => $json->d->Title
+			);
 
 		} catch(ParseException $e) {
 			throw new SharePointException($e->getMessage());
