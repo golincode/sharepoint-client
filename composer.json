@@ -1,0 +1,26 @@
+{
+    "name": "altek/sharepoint-client",
+    "type": "library",
+    "description": "SharePoint REST API Client",
+    "keywords": ["sharepoint", "rest", "api", "client"],
+    "homepage": "https://github.com/quetzyg/sharepoint-client",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Quetzy Garcia",
+            "email": "quetzyg@altek.org",
+            "role": "Developer"
+        }
+    ],
+    "require": {
+        "php": ">=5.4.0",
+        "guzzlehttp/guzzle": "~4.0",
+        "nixilla/php-jwt": "~0.1",
+        "nesbot/Carbon": "~1.9"
+    },
+    "autoload": {
+        "psr-4": {
+            "Altek\\SharePoint\\": "src/"
+        }
+    }
+}
