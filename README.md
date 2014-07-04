@@ -25,9 +25,9 @@ Add [altek/sharepoint-client](https://packagist.org/packages/altek/sharepoint-cl
     }
 
 
-## Usage
+## Basic usage
 
-### Class instantiation:
+### Class instantiation
 
     <?php
 
@@ -51,7 +51,7 @@ Add [altek/sharepoint-client](https://packagist.org/packages/altek/sharepoint-cl
 **Attention:** In order to use the methods provided by this class, you need an **Access Token** which can be generated/requested through a logged **User** or an **App only policy**.
 
 
-### Get an Access Token as a **User**:
+### Get an Access Token as a **User**
 
     try {
         $config = array(
@@ -68,7 +68,7 @@ Add [altek/sharepoint-client](https://packagist.org/packages/altek/sharepoint-cl
 **Note:** The context token is accessible via the **SPAppToken** input (POST) when SharePoint redirects to our Application.
 
 
-### Get an Access Token as an **Application**:
+### Get an Access Token as an **Application (App only policy)**
 
     try {
         $config = array(
