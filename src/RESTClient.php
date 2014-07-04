@@ -3,7 +3,8 @@
  * This file is part of the SharePoint REST API Client package.
  *
  * @author     Quetzy Garcia <quetzyg@altek.org>
- * @copyright  2014 Quetzy Garcia
+ * @copyright  2014 Architect 365 / Quetzy Garcia
+ * @link       http://architect365.co.uk
  *
  * For the full copyright and license information,
  * please view the LICENSE file that was distributed
@@ -31,46 +32,15 @@ class RESTClient
 	 *
 	 * @access  private
 	 */
-	private $rc = null;
+	private $client = null;
+
 
 	/**
-	 * URL path
+	 * Application URL path
 	 *
 	 * @access  private
 	 */
 	private $path = null;
-
-
-	/**
-	 * Access Control Service URL
-	 *
-	 * @access  private
-	 */
-	private $acs = null;
-
-
-	/**
-	 * Client ID
-	 *
-	 * @access  private
-	 */
-	private $client_id = null;
-
-
-	/**
-	 * Secret
-	 *
-	 * @access  private
-	 */
-	private $secret = null;
-
-
-	/**
-	 * Resource
-	 *
-	 * @access  private
-	 */
-	private $resource = null;
 
 
 	/**
@@ -90,7 +60,7 @@ class RESTClient
 
 
 	/**
-	 * REST constructor
+	 * REST Client constructor
 	 *
 	 * @access  public
 	 * @param   array $config
@@ -103,48 +73,24 @@ class RESTClient
 			throw new SharePointException('The Application URL is empty/not set');
 		}
 
-		if (empty($config['path'])) {
-			throw new SharePointException('The Application URL path is empty/not set');
-		}
-
 		if ( ! filter_var($config['url'], FILTER_VALIDATE_URL)) {
 			throw new SharePointException('The Application URL is invalid');
 		}
 
-		if (empty($config['acs'])) {
-			throw new SharePointException('The Access Control Service URL is empty/not set');
-		}
-
-		if ( ! filter_var($config['acs'], FILTER_VALIDATE_URL)) {
-			throw new SharePointException('The Access Control Service URL is invalid');
-		}
-
-		if (empty($config['client_id'])) {
-			throw new SharePointException('The Client ID is empty/not set');
-		}
-
-		if (empty($config['secret'])) {
-			throw new SharePointException('The Secret is empty/not set');
-		}
-
-		if (empty($config['resource'])) {
-			throw new SharePointException('The Resource is empty/not set');
+		if (empty($config['path'])) {
+			throw new SharePointException('The Application URL path is empty/not set');
 		}
 
 		$this->path = $config['path'];
-		$this->acs = $config['acs'];
-		$this->client_id = $config['client_id'];
-		$this->secret = $config['secret'];
-		$this->resource = $config['resource'];
 
-		$this->rc = new Client(array(
+		$this->client = new Client(array(
 			'base_url' => $config['url']
 		));
 
 		/**
 		 * Set default cURL options
 		 */
-		$this->rc->setDefaultOption('config', array(
+		$this->client->setDefaultOption('config', array(
 			'curl' => array(
 				CURLOPT_SSLVERSION     => 3,
 				CURLOPT_SSL_VERIFYHOST => 0,
@@ -162,7 +108,7 @@ class RESTClient
 	 */
 	public function __destruct()
 	{
-		$this->rc = null;
+		$this->client = null;
 	}
 
 
@@ -204,12 +150,12 @@ class RESTClient
 	 * Get Item properties
 	 *
 	 * @access  private
-	 * @param   object $item Item object
-	 * @param   array  $map  Map object properties to an array key
+	 * @param   object $item  Item object
+	 * @param   array  $extra Extra properties to add to the array
 	 * @throws  SharePointException
 	 * @return  array
 	 */
-	private function getItemProperties($item = null, array $map = array())
+	private function getItemProperties($item = null, array $extra = array())
 	{
 		// default properties
 		$properties = array(
@@ -225,7 +171,7 @@ class RESTClient
 		);
 
 		// add extra properties
-		$this->addProperties($item, $properties, $map);
+		$this->addProperties($item, $properties, $extra);
 
 		return $properties;
 	}
@@ -235,21 +181,25 @@ class RESTClient
 	 * Get an Authentication Token through a User
 	 *
 	 * @access  public
-	 * @param   string $token Context Token
+	 * @param   array $config
 	 * @throws  SharePointException
 	 * @return  array
 	 */
-	public function tokenFromUser($token = null)
+	public function tokenFromUser(array $config)
 	{
-		if (empty($token)) {
+		if (empty($config['token'])) {
 			throw new SharePointException('The Context Token is empty/not set');
 		}
 
+		if (empty($config['secret'])) {
+			throw new SharePointException('The Secret is empty/not set');
+		}
+
 		try {
-			$jwt = JWT::decode($token, $this->secret, false);
+			$jwt = JWT::decode($config['token'], $config['secret'], false);
 
 			// get URL hostname
-			$hostname = parse_url($this->rc->getBaseUrl(), PHP_URL_HOST);
+			$hostname = parse_url($this->client->getBaseUrl(), PHP_URL_HOST);
 
 			// build resource
 			$resource = str_replace('@', '/'.$hostname.'@', $jwt->appctxsender);
@@ -257,7 +207,7 @@ class RESTClient
 			// decode App context
 			$oauth2 = json_decode($jwt->appctx);
 
-			$response = $this->rc->post($oauth2->SecurityTokenServiceUri, array(
+			$response = $this->client->post($oauth2->SecurityTokenServiceUri, array(
 				'exceptions' => false,
 
 				'headers'    => array(
@@ -270,7 +220,7 @@ class RESTClient
 				'body'       => http_build_query(array(
 					'grant_type'    => 'refresh_token',
 					'client_id'     => $jwt->aud,
-					'client_secret' => $this->secret,
+					'client_secret' => $config['secret'],
 					'refresh_token' => $jwt->refreshtoken,
 					'resource'      => $resource
 				))
@@ -307,13 +257,34 @@ class RESTClient
 	 * Get an Authentication Token through an Application
 	 *
 	 * @access  public
+	 * @param   array $config
 	 * @throws  SharePointException
 	 * @return  array
 	 */
-	public function tokenFromApp()
+	public function tokenFromApp(array $config)
 	{
+		if (empty($config['acs'])) {
+			throw new SharePointException('The Access Control Service URL is empty/not set');
+		}
+
+		if ( ! filter_var($config['acs'], FILTER_VALIDATE_URL)) {
+			throw new SharePointException('The Access Control Service URL is invalid');
+		}
+
+		if (empty($config['client_id'])) {
+			throw new SharePointException('The Client ID is empty/not set');
+		}
+
+		if (empty($config['secret'])) {
+			throw new SharePointException('The Secret is empty/not set');
+		}
+
+		if (empty($config['resource'])) {
+			throw new SharePointException('The Resource is empty/not set');
+		}
+
 		try {
-			$response = $this->rc->post($this->acs, array(
+			$response = $this->client->post($config['acs'], array(
 				'exceptions' => false,
 
 				'headers'    => array(
@@ -325,9 +296,9 @@ class RESTClient
 				 */
 				'body'       => http_build_query(array(
 					'grant_type'    => 'client_credentials',
-					'client_id'     => $this->client_id,
-					'client_secret' => $this->secret,
-					'resource'      => $this->resource
+					'client_id'     => $config['client_id'],
+					'client_secret' => $config['secret'],
+					'resource'      => $config['resource']
 				))
 			));
 
@@ -367,7 +338,7 @@ class RESTClient
 				throw new SharePointException('The Access Token does not exist. Run tokenFromUser() or tokenFromApp() first');
 			}
 
-			$response = $this->rc->post($this->path.'/_api/contextinfo', array(
+			$response = $this->client->post($this->path.'/_api/contextinfo', array(
 				'exceptions' => false,
 
 				'headers'    => array(
@@ -401,18 +372,18 @@ class RESTClient
 	 * Get all the available Lists
 	 *
 	 * @access  public
-	 * @param   array  $map Map object properties to an array key
+	 * @param   array $extra Extra properties to add to the array
 	 * @throws  SharePointException
 	 * @return  array
 	 */
-	public function getLists(array $map = array())
+	public function getLists(array $extra = array())
 	{
 		try {
 			if (empty($this->access_token)) {
 				throw new SharePointException('The Access Token does not exist. Run tokenFromUser() or tokenFromApp() first');
 			}
 
-			$response = $this->rc->get($this->path.'/_api/web/Lists', array(
+			$response = $this->client->get($this->path.'/_api/web/Lists', array(
 				'exceptions' => false,
 
 				'headers'    => array(
@@ -436,11 +407,11 @@ class RESTClient
 					'title'       => $list->Title,
 					'description' => $list->Description,
 					'items'       => $list->ItemCount,
-					'created'     => $list->Created
+					'created'     => new Carbon($list->Created)
 				);
 
 				// add extra properties
-				$this->addProperties($list, $properties, $map);
+				$this->addProperties($list, $properties, $extra);
 
 				$lists[] = $properties;
 			}
@@ -472,7 +443,7 @@ class RESTClient
 				throw new SharePointException('The Library is empty/not set');
 			}
 
-			$response = $this->rc->get($this->path."/_api/web/Lists/GetByTitle('".$library."')/itemCount", array(
+			$response = $this->client->get($this->path."/_api/web/Lists/GetByTitle('".$library."')/itemCount", array(
 				'exceptions' => false,
 
 				'headers'    => array(
@@ -500,7 +471,7 @@ class RESTClient
 	 *
 	 * @access  public
 	 * @param   string $library Library name
-	 * @param   array  $extra   Extra Item properties
+	 * @param   array  $extra   Extra properties to add to the array
 	 * @throws  SharePointException
 	 * @return  array of arrays with Item properties
 	 */
@@ -515,7 +486,7 @@ class RESTClient
 				throw new SharePointException('The Library is empty/not set');
 			}
 
-			$response = $this->rc->get($this->path."/_api/web/Lists/GetByTitle('".$library."')/items", array(
+			$response = $this->client->get($this->path."/_api/web/Lists/GetByTitle('".$library."')/items", array(
 				'exceptions' => false,
 
 				'headers'    => array(
@@ -550,11 +521,11 @@ class RESTClient
 	 * @access  public
 	 * @param   string $library Library name
 	 * @param   int    $id      Item (Document) ID
-	 * @param   array  $map     Map object properties to an array key
+	 * @param   array  $extra   Extra properties to add to the array
 	 * @throws  SharePointException
 	 * @return  array with Item properties
 	 */
-	public function getListItem($library = null, $id = 0, array $map = array())
+	public function getListItem($library = null, $id = 0, array $extra = array())
 	{
 		try {
 			if (empty($this->access_token)) {
@@ -569,7 +540,7 @@ class RESTClient
 				throw new SharePointException('The Item ID is empty/not set');
 			}
 
-			$response = $this->rc->get($this->path."/_api/web/Lists/GetByTitle('".$library."')/items(".$id.")", array(
+			$response = $this->client->get($this->path."/_api/web/Lists/GetByTitle('".$library."')/items(".$id.")", array(
 				'exceptions' => false,
 
 				'headers'    => array(
@@ -584,7 +555,7 @@ class RESTClient
 				throw new SharePointException($json->error->message->value);
 			}
 
-			return $this->getItemProperties($json->d, $map);
+			return $this->getItemProperties($json->d, $extra);
 
 		} catch(ParseException $e) {
 			throw new SharePointException($e->getMessage());
@@ -626,7 +597,7 @@ class RESTClient
 				throw new SharePointException('Failure to get the file contents for: '.$file);
 			}
 
-			$response = $this->rc->post($this->path."/_api/web/GetFolderByServerRelativeUrl('Lists/".$library."')/Files/Add(url='".basename($file)."',overwrite='".($overwrite ? 'true' : 'false')."')", array(
+			$response = $this->client->post($this->path."/_api/web/GetFolderByServerRelativeUrl('Lists/".$library."')/Files/Add(url='".basename($file)."',overwrite='".($overwrite ? 'true' : 'false')."')", array(
 				'exceptions' => false,
 
 				'headers'    => array(
@@ -703,7 +674,7 @@ class RESTClient
 
 			$data = json_encode($post);
 
-			$response = $this->rc->post($this->path."/_api/web/Lists/GetByTitle('".$library."')/items(".$id.")", array(
+			$response = $this->client->post($this->path."/_api/web/Lists/GetByTitle('".$library."')/items(".$id.")", array(
 				'exceptions' => false,
 
 				'headers'    => array(
@@ -759,7 +730,7 @@ class RESTClient
 
 			$ctx = $this->getContextInfo();
 
-			$response = $this->rc->post($this->path."/_api/web/Lists/GetByTitle('".$library."')/items(".$id.")", array(
+			$response = $this->client->post($this->path."/_api/web/Lists/GetByTitle('".$library."')/items(".$id.")", array(
 				'exceptions' => false,
 
 				'headers'    => array(
@@ -803,7 +774,7 @@ class RESTClient
 				throw new SharePointException('The Access Token does not exist. Run tokenFromUser() first');
 			}
 
-			$response = $this->rc->get($this->path.'/_api/SP.UserProfiles.PeopleManager/GetMyProperties', array(
+			$response = $this->client->get($this->path.'/_api/SP.UserProfiles.PeopleManager/GetMyProperties', array(
 				'exceptions' => false,
 
 				'headers' => array(
@@ -852,7 +823,7 @@ class RESTClient
 				throw new SharePointException('The Account is empty/not set');
 			}
 
-			$response = $this->rc->post($this->path."/_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)", array(
+			$response = $this->client->post($this->path."/_api/SP.UserProfiles.PeopleManager/GetPropertiesFor(accountName=@v)", array(
 				'exceptions' => false,
 
 				'headers' => array(

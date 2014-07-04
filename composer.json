@@ -2,7 +2,7 @@
     "name": "altek/sharepoint-client",
     "type": "library",
     "description": "SharePoint REST API Client",
-    "keywords": ["sharepoint", "rest", "api", "client"],
+    "keywords": ["sharepoint", "online", "2013", "oauth2", "rest", "api", "client", "architect", "365"],
     "homepage": "https://github.com/quetzyg/sharepoint-client",
     "license": "MIT",
     "authors": [
