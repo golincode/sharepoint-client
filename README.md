@@ -158,3 +158,56 @@ This method returns an Array with all the available Items from a List.
 **Note:** By default, an Item Array will only contain: ID, GUID, Title, Entity Type, URI, Author ID, Editor ID, and Created/Modified date as [Carbon](https://packagist.org/packages/nesbot/carbon) objects.
 
 If more information about an Item is needed, use the **$extra** Array parameter to add other properties returned by the SharePoint API to the resulting Array.
+
+
+### Get an Item from a specific List
+
+    try {
+        $library = 'MyLibrary';
+
+        $id = 1;
+
+        // Extra properties to add
+        $extra = array(
+            'content_type_id' => 'ContentTypeId',
+            // ...
+        );
+
+        $item = $rc->getListItem($library, $id, $extra);
+
+    } catch(SharePointException $e) {
+        // handle exceptions
+    }
+
+This method returns an Array with the Item information.
+
+**Note:** By default, an Item Array will only contain: ID, GUID, Title, Entity Type, URI, Author ID, Editor ID, and Created/Modified date as [Carbon](https://packagist.org/packages/nesbot/carbon) objects.
+
+If more information about an Item is needed, use the **$extra** Array parameter to add other properties returned by the SharePoint API to the resulting Array.
+
+
+### Upload an Item to a List
+
+    try {
+        $library = 'MyLibrary';
+
+        $file = '/path/to/a/file.jpg';
+
+        // Item properties
+        $properties = array(
+            'Title' => 'A picture in JPEG format',
+            // ...
+        );
+
+        // Silently overwrite an existing file with the same name
+        $overwrite = true;
+
+        $rc->uploadListItem($library, $file, $properties, $overwrite);
+
+    } catch(SharePointException $e) {
+        // handle exceptions
+    }
+
+This method returns true if the file was successfully uploaded.
+
+**Note:** If the **$overwrite** value is false, an exception will be thrown when a file with the same name already exists.
