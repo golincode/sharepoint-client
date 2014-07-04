@@ -33,6 +33,10 @@ Add [altek/sharepoint-client](https://packagist.org/packages/altek/sharepoint-cl
 
 ### Class instantiation:
 
+    <?php
+
+    require 'vendor/autoload.php';
+
     use Altek\SharePoint\SharePointException;
     use Altek\SharePoint\RESTClient;
 
