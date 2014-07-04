@@ -52,8 +52,8 @@ Add [altek/sharepoint-client](https://packagist.org/packages/altek/sharepoint-cl
         // handle exceptions
     }
 
+**Attention:** In order to use the methods provided by this class, you need an **Access Token** which can be requested either by a logged User or an Application.
 
-In order to use the **SharePoint REST API Client** methods, you need an **Access Token** which can be generated either by a logged User or an Application.
 
 ### Get an Access Token as a **User**:
 
