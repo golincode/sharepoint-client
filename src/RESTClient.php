@@ -406,7 +406,7 @@ class RESTClient
 					'title'       => $list->Title,
 					'description' => $list->Description,
 					'items'       => $list->ItemCount,
-					'created'     => $list->Created
+					'created'     => new Carbon($list->Created)
 				);
 
 				// add extra properties
