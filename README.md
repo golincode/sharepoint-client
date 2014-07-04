@@ -69,6 +69,8 @@ Add [altek/sharepoint-client](https://packagist.org/packages/altek/sharepoint-cl
         // handle exceptions
     }
 
+**Note:** The context token is accessible via the **SPAppToken** input (POST) when SharePoint redirects to our Application.
+
 
 ### Get an Access Token as an **Application**:
 
