@@ -1,6 +1,6 @@
 # SharePoint REST API Client
 
-The **SharePoint REST API Client** allows you to authenticate with SharePoint Online (2013) via OAuth2 and work with a subset of SharePoint's functionality (Lists and Users for now) using PHP.
+The **SharePoint REST API Client** allows you to authenticate with SharePoint Online (2013) via [OAuth2](http://oauth.net/2/) and work with a subset of SharePoint's functionality (currently **Lists** and **Users**) using [PHP](http://www.php.net).
 
 The library is available to anyone and is licensed under the MIT license.
 
